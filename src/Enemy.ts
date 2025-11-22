@@ -9,20 +9,23 @@ export class Enemy extends Entity {
 
     update(_canvas: HTMLCanvasElement, player?: Player): void {
         if (player) {
+            // Calculate current speed (magnitude)
+            const currentSpeed = Math.hypot(this.velocity.x, this.velocity.y);
+
             const angle = Math.atan2(
                 player.position.y - this.position.y,
                 player.position.x - this.position.x
             );
-            // Constant speed of 1 (matching original spawn velocity magnitude)
-            // Or maybe slightly faster/slower? Original was just cos/sin so magnitude 1.
-            this.velocity.x = Math.cos(angle);
-            this.velocity.y = Math.sin(angle);
+
+            // Update direction while preserving speed
+            this.velocity.x = Math.cos(angle) * currentSpeed;
+            this.velocity.y = Math.sin(angle) * currentSpeed;
         }
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
     }
 
-    static spawn(canvas: HTMLCanvasElement, player: Player): Enemy {
+    static spawn(canvas: HTMLCanvasElement, player: Player, difficulty: number = 1): Enemy {
         const radius = Math.random() * (30 - 4) + 4;
         let x: number;
         let y: number;
@@ -42,9 +45,14 @@ export class Enemy extends Entity {
             player.position.x - x
         );
 
+        // Scale speed based on difficulty (increases with difficulty)
+        const baseSpeed = 1;
+        const speedMultiplier = 1 + (difficulty - 1) * 0.2; // +20% speed per difficulty level
+        const speed = baseSpeed * speedMultiplier;
+
         const velocity = {
-            x: Math.cos(angle),
-            y: Math.sin(angle)
+            x: Math.cos(angle) * speed,
+            y: Math.sin(angle) * speed
         };
 
         return new Enemy(x, y, radius, color, velocity);

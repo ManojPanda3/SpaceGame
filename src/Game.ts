@@ -27,6 +27,11 @@ export class Game {
     isMobile: boolean = false;
     joystick: { active: boolean, x: number, y: number, originX: number, originY: number } = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
 
+    // Difficulty Scaling
+    maxEnemies: number = 5; // Maximum enemies on screen at once
+    difficultyLevel: number = 1; // Current difficulty level
+    baseSpawnInterval: number = 1000; // Base spawn interval in ms
+
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
@@ -188,6 +193,11 @@ export class Game {
         this.player.doubleShotTimer = 0;
         this.player.speedBoostTimer = 0;
         this.player.isInvulnerable = false;
+
+        // Reset difficulty
+        this.difficultyLevel = 1;
+        this.maxEnemies = 5;
+
         this.animate();
         this.spawnEnemies();
 
@@ -204,11 +214,15 @@ export class Game {
 
     spawnEnemies() {
         if (this.spawnIntervalId) clearInterval(this.spawnIntervalId);
+
+        // Calculate spawn interval based on difficulty (gets faster as difficulty increases)
+        const spawnInterval = Math.max(300, this.baseSpawnInterval / this.difficultyLevel);
+
         this.spawnIntervalId = setInterval(() => {
-            if (!this.isPaused) {
-                this.enemies.push(Enemy.spawn(this.canvas, this.player));
+            if (!this.isPaused && this.enemies.length < this.maxEnemies) {
+                this.enemies.push(Enemy.spawn(this.canvas, this.player, this.difficultyLevel));
             }
-        }, 1000);
+        }, spawnInterval);
     }
 
     handleInput() {
@@ -225,6 +239,21 @@ export class Game {
         if (this.joystick.active || (this.joystick.x !== 0 || this.joystick.y !== 0)) {
             this.player.velocity.x += this.joystick.x * speed;
             this.player.velocity.y += this.joystick.y * speed;
+        }
+    }
+
+    updateDifficulty() {
+        // Increase difficulty every 1000 points
+        const newDifficultyLevel = Math.floor(this.score / 1000) + 1;
+
+        if (newDifficultyLevel !== this.difficultyLevel) {
+            this.difficultyLevel = newDifficultyLevel;
+
+            // Increase max enemies as difficulty increases (cap at 15)
+            this.maxEnemies = Math.min(15, 5 + (this.difficultyLevel - 1) * 2);
+
+            // Restart spawning with new difficulty settings
+            this.spawnEnemies();
         }
     }
 
@@ -452,6 +481,9 @@ export class Game {
 
                         const scoreEl = document.getElementById('scoreEl');
                         if (scoreEl) scoreEl.innerHTML = this.score.toString();
+
+                        // Update difficulty based on new score
+                        this.updateDifficulty();
                     }
                 });
             });
