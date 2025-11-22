@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <title>Cosmic Defender</title>
+</head>
+
+<body>
+  <div class="fixed text-white ml-4 mt-4 select-none z-10">
+    <div class="flex items-center mb-2">
+      <!-- HP Bar Container -->
+      <div class="relative">
+        <div class="flex flex-col">
+          <div class="flex items-center">
+            <span
+              style="font-family: 'Press Start 2P', cursive; font-size: 10px; margin-right: 5px; color: #fff; z-index: 30;">HP</span>
+            <div class="w-48 h-4 bg-gray-900 border-2 border-gray-600 relative transform -skew-x-12 overflow-hidden">
+              <div id="hpBarEl"
+                class="h-full bg-gradient-to-r from-green-400 to-green-600 w-full transition-all duration-200"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-sm flex items-center"
+      style="font-family: 'Press Start 2P', cursive; font-size: 12px; color: #fbbf24;">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-400" viewBox="0 0 20 20"
+        fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z"
+          clip-rule="evenodd" />
+      </svg>
+      <span>COINS: </span><span id="scoreEl">0</span>
+    </div>
+  </div>
+
+  <div id="modalEl" class="fixed inset-0 flex items-center justify-center">
+    <div class="bg-white max-w-md w-full p-6 text-center rounded-lg shadow-xl relative">
+      <h1 class="text-4xl font-bold leading-none mb-2 text-gray-900" id="bigScoreEl">0</h1>
+      <p class="text-sm text-gray-700 mb-4">Points</p>
+      <div>
+        <button id="startGameBtn"
+          class="bg-blue-500 text-white w-full py-3 rounded-full text-lg font-bold hover:bg-blue-600 transition duration-200">Start
+          Game</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas></canvas>
+  <script type="module" src="/src/main.ts"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</body>
+
+</html>
