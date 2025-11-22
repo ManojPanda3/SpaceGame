@@ -47,7 +47,7 @@ export class Enemy extends Entity {
 
         // Scale speed based on difficulty (increases with difficulty)
         const baseSpeed = 1;
-        const speedMultiplier = 1 + (difficulty - 1) * 0.2; // +20% speed per difficulty level
+        const speedMultiplier = 1 + (difficulty - 1) * 0.1; // +10% speed per difficulty level (was 20%)
         const speed = baseSpeed * speedMultiplier;
 
         const velocity = {

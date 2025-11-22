@@ -13,100 +13,144 @@
 
 <body>
   <div class="fixed text-white ml-4 mt-4 select-none z-10">
-    <div class="flex items-center mb-2">
+    <div class="flex items-center mb-4">
       <!-- HP Bar Container -->
-      <div class="relative">
-        <div class="flex flex-col">
-          <div class="flex items-center">
-            <span
-              style="font-family: 'Press Start 2P', cursive; font-size: 10px; margin-right: 5px; color: #fff; z-index: 30;">HP</span>
-            <div class="w-48 h-4 bg-gray-900 border-2 border-gray-600 relative transform -skew-x-12 overflow-hidden">
-              <div id="hpBarEl"
-                class="h-full bg-linear-to-r from-green-400 to-green-600 w-full transition-all duration-200"></div>
-            </div>
+      <div class="relative flex items-center gap-2">
+        <span class="text-red-400 font-bold tracking-widest text-xs"
+          style="font-family: 'Press Start 2P', cursive; text-shadow: 0 0 5px #f87171;">HP</span>
+        <div class="w-48 h-6 bg-gray-900 relative transform -skew-x-12 overflow-hidden border-2 border-gray-700">
+          <div id="hpBarEl"
+            class="h-full bg-linear-to-r from-red-500 to-red-700 w-full transition-all duration-200 shadow-[0_0_10px_rgba(239,68,68,0.8)]">
           </div>
         </div>
       </div>
     </div>
     <div class="text-sm flex items-center"
-      style="font-family: 'Press Start 2P', cursive; font-size: 12px; color: #fbbf24;">
+      style="font-family: 'Press Start 2P', cursive; font-size: 12px; color: #fbbf24; text-shadow: 0 0 5px #fbbf24;">
       <!-- Enhanced Coin Icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 filter drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]"
+        viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <circle cx="12" cy="12" r="9" stroke="#fbbf24" stroke-width="2" fill="#f59e0b" fill-opacity="0.2" />
         <path d="M12 6V18" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" />
         <path d="M12 6C14 6 15 8 15 12C15 16 14 18 12 18" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" />
         <path d="M12 6C10 6 9 8 9 12C9 16 10 18 12 18" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" />
       </svg>
-      <span>COINS: </span><span id="scoreEl">0</span>
+      <span>SCORE: </span><span id="scoreEl" class="ml-2">0</span>
     </div>
   </div>
 
+  <!-- Mobile Controls (Top Right) -->
+  <div id="mobileControls" class="fixed top-4 right-4 flex gap-4 z-50 hidden">
+    <button id="fullscreenBtn" class="bg-gray-800 bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+      </svg>
+    </button>
+    <button id="pauseBtn" class="bg-gray-800 bg-opacity-50 p-2 rounded-full text-white hover:bg-opacity-75">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </button>
+  </div>
+
   <!-- Power-up Timers (Progress Bars) -->
-  <div class="fixed top-20 left-4 flex flex-col gap-3 select-none z-10 w-32">
+  <div class="fixed top-24 left-4 flex flex-col gap-4 select-none z-10 w-40">
     <div id="shieldContainer" class="hidden flex-col gap-1">
       <div class="flex items-center gap-2">
-        <div class="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">
-          S</div>
-        <span class="text-cyan-400 text-[10px] font-bold">SHIELD</span>
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center bg-cyan-900/50 border border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+          <img src="/shield.png" alt="Shield" class="w-6 h-6 object-contain">
+        </div>
+        <span class="text-cyan-400 text-[10px] font-bold tracking-wider"
+          style="font-family: 'Press Start 2P', cursive;">SHIELD</span>
       </div>
-      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
-        <div id="shieldBar" class="h-full bg-cyan-400 transition-all duration-100 ease-linear" style="width: 100%">
+      <div class="w-full h-2 bg-gray-900 rounded-full overflow-hidden border border-cyan-800">
+        <div id="shieldBar"
+          class="h-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all duration-100 ease-linear"
+          style="width: 100%">
         </div>
       </div>
     </div>
     <div id="doubleContainer" class="hidden flex-col gap-1">
       <div class="flex items-center gap-2">
-        <div class="w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">
-          D</div>
-        <span class="text-rose-400 text-[10px] font-bold">DOUBLE</span>
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center bg-rose-900/50 border border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]">
+          <img src="/double.png" alt="Double" class="w-6 h-6 object-contain">
+        </div>
+        <span class="text-rose-400 text-[10px] font-bold tracking-wider"
+          style="font-family: 'Press Start 2P', cursive;">DOUBLE</span>
       </div>
-      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
-        <div id="doubleBar" class="h-full bg-rose-400 transition-all duration-100 ease-linear" style="width: 100%">
+      <div class="w-full h-2 bg-gray-900 rounded-full overflow-hidden border border-rose-800">
+        <div id="doubleBar"
+          class="h-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] transition-all duration-100 ease-linear"
+          style="width: 100%">
         </div>
       </div>
     </div>
     <div id="speedContainer" class="hidden flex-col gap-1">
       <div class="flex items-center gap-2">
         <div
-          class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">B
+          class="w-8 h-8 rounded-full flex items-center justify-center bg-yellow-900/50 border border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+          <img src="/speed.png" alt="Speed" class="w-6 h-6 object-contain">
         </div>
-        <span class="text-yellow-400 text-[10px] font-bold">SPEED</span>
+        <span class="text-yellow-400 text-[10px] font-bold tracking-wider"
+          style="font-family: 'Press Start 2P', cursive;">SPEED</span>
       </div>
-      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
-        <div id="speedBar" class="h-full bg-yellow-400 transition-all duration-100 ease-linear" style="width: 100%">
+      <div class="w-full h-2 bg-gray-900 rounded-full overflow-hidden border border-yellow-800">
+        <div id="speedBar"
+          class="h-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] transition-all duration-100 ease-linear"
+          style="width: 100%">
         </div>
       </div>
     </div>
   </div>
 
   <!-- Pause Modal -->
-  <div id="pauseModalEl" class="fixed inset-0 flex items-center justify-center hidden bg-black bg-opacity-50 z-50">
-    <div class="bg-white p-8 rounded-lg text-center">
-      <h2 class="text-3xl font-bold mb-4 text-gray-900">PAUSED</h2>
-      <p class="text-gray-600 mb-4">Press ESC to Resume</p>
-      <button id="restartBtn"
-        class="bg-red-500 text-white px-6 py-2 rounded-full font-bold hover:bg-red-600 transition duration-200">Restart
-        Game</button>
+  <div id="pauseModalEl"
+    class="fixed inset-0 flex items-center justify-center hidden bg-black bg-opacity-80 z-[60] backdrop-blur-sm">
+    <div
+      class="bg-gray-900 p-8 rounded-2xl text-center border-2 border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.5)] max-w-sm w-full mx-4">
+      <h2 class="text-4xl font-bold mb-6 text-white tracking-wider"
+        style="font-family: 'Press Start 2P', cursive; text-shadow: 0 0 10px #06b6d4;">PAUSED</h2>
+      <div class="flex flex-col gap-4">
+        <button id="resumeBtn"
+          class="bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-cyan-500 transition duration-200 border-b-4 border-cyan-800 active:border-b-0 active:translate-y-1 uppercase tracking-wide">
+          Resume
+        </button>
+        <button id="restartBtn"
+          class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-500 transition duration-200 border-b-4 border-red-800 active:border-b-0 active:translate-y-1 uppercase tracking-wide">
+          Restart
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Joystick UI (Hidden by default) -->
+  <!-- Left Touch Zone for Joystick -->
+  <div id="leftTouchZone" class="fixed top-0 left-0 w-1/2 h-full z-20 touch-none hidden"></div>
+
+  <!-- Joystick UI (Fixed) -->
   <div id="joystickContainer"
-    class="fixed bottom-8 left-8 w-32 h-32 bg-gray-800 bg-opacity-50 rounded-full hidden touch-none z-20">
+    class="fixed bottom-16 left-16 w-32 h-32 bg-gray-800 bg-opacity-50 rounded-full touch-none z-30 transition-opacity duration-200 hidden"
+    style="opacity: 0.5;">
     <div id="joystickKnob"
-      class="absolute w-12 h-12 bg-white bg-opacity-80 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-lg">
+      class="absolute w-12 h-12 bg-white bg-opacity-80 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-lg pointer-events-none">
     </div>
   </div>
 
-  <div id="modalEl" class="fixed inset-0 flex items-center justify-center">
-    <div class="bg-white max-w-md w-full p-6 text-center rounded-lg shadow-xl relative">
-      <h1 class="text-4xl font-bold leading-none mb-2 text-gray-900" id="bigScoreEl">0</h1>
-      <p class="text-sm text-gray-700 mb-4">Points</p>
+  <div id="modalEl" class="fixed inset-0 flex items-center justify-center z-[60] bg-black bg-opacity-90">
+    <div
+      class="bg-gray-900 max-w-md w-full p-8 text-center rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.6)] relative border-2 border-blue-500 mx-4">
+      <h1 class="text-6xl font-bold leading-none mb-2 text-white" id="bigScoreEl"
+        style="font-family: 'Press Start 2P', cursive; text-shadow: 0 0 15px #3b82f6;">0</h1>
+      <p class="text-sm text-blue-300 mb-8 uppercase tracking-widest">Points</p>
       <div>
         <button id="startGameBtn"
-          class="bg-blue-500 text-white w-full py-3 rounded-full text-lg font-bold hover:bg-blue-600 transition duration-200">Start
-          Game</button>
+          class="bg-blue-600 text-white w-full py-4 rounded-xl text-lg font-bold hover:bg-blue-500 transition duration-200 border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 uppercase tracking-wider shadow-lg">
+          Start Game
+        </button>
       </div>
     </div>
   </div>

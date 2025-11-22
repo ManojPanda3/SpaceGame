@@ -25,7 +25,29 @@ export class Game {
 
     isPaused: boolean = false;
     isMobile: boolean = false;
-    joystick: { active: boolean, x: number, y: number, originX: number, originY: number } = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
+    joystick: {
+        active: boolean,
+        x: number,
+        y: number,
+        originX: number,
+        originY: number,
+        touchId: number | null,
+        startTime: number,
+        isTap: boolean,
+        locked: boolean,
+        timeoutId: number | null
+    } = {
+            active: false,
+            x: 0,
+            y: 0,
+            originX: 0,
+            originY: 0,
+            touchId: null,
+            startTime: 0,
+            isTap: false,
+            locked: false,
+            timeoutId: null
+        };
 
     // Difficulty Scaling
     maxEnemies: number = 5; // Maximum enemies on screen at once
@@ -41,8 +63,10 @@ export class Game {
         // Mobile Detection
         this.isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
         if (this.isMobile) {
-            const joystickContainer = document.getElementById('joystickContainer');
-            if (joystickContainer) joystickContainer.style.display = 'block';
+            const mobileControls = document.getElementById('mobileControls');
+            const leftTouchZone = document.getElementById('leftTouchZone');
+            if (mobileControls) mobileControls.style.display = 'flex';
+            if (leftTouchZone) leftTouchZone.style.display = 'block';
         }
 
         this.player = new Player(
@@ -83,55 +107,187 @@ export class Game {
             }
         });
 
-        // Touch Shoot (Anywhere on screen except joystick)
-        window.addEventListener('touchstart', (e) => {
-            if (this.gameRunning && !this.isPaused && this.isMobile) {
-                const touch = e.touches[0];
-                const joystickContainer = document.getElementById('joystickContainer');
-                const rect = joystickContainer?.getBoundingClientRect();
+        // Mobile Touch Handling
+        if (this.isMobile) {
+            const joystickContainer = document.getElementById('joystickContainer');
+            const joystickKnob = document.getElementById('joystickKnob');
+            const leftTouchZone = document.getElementById('leftTouchZone');
 
-                // Don't shoot if touching joystick area
-                if (rect && (
-                    touch.clientX >= rect.left &&
-                    touch.clientX <= rect.right &&
-                    touch.clientY >= rect.top &&
-                    touch.clientY <= rect.bottom
-                )) return;
+            // Fixed Joystick Logic
+            if (joystickContainer && joystickKnob) {
+                // Ensure joystick is visible
+                joystickContainer.style.display = 'block';
 
-                const newProjectiles = this.player.shoot({ x: touch.clientX, y: touch.clientY });
-                this.projectiles.push(...newProjectiles);
+                joystickContainer.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+
+                    if (!this.joystick.active) {
+                        const touch = e.changedTouches[0];
+                        this.joystick.active = true;
+                        this.joystick.touchId = touch.identifier;
+                        this.joystick.startTime = Date.now();
+                        this.joystick.isTap = true; // Assume tap initially
+                        this.joystick.locked = false; // Not locked yet
+
+                        // Set origin to center of fixed joystick
+                        const rect = joystickContainer.getBoundingClientRect();
+                        this.joystick.originX = rect.left + rect.width / 2;
+                        this.joystick.originY = rect.top + rect.height / 2;
+
+                        // Visual feedback: Full opacity
+                        joystickContainer.style.opacity = '1.0';
+
+                        // Start delay timer (250ms)
+                        if (this.joystick.timeoutId) clearTimeout(this.joystick.timeoutId);
+                        this.joystick.timeoutId = window.setTimeout(() => {
+                            this.joystick.locked = true;
+                            this.joystick.isTap = false;
+                            this.updateJoystick(touch.clientX, touch.clientY);
+                        }, 72);
+                    }
+                }, { passive: false });
+
+                // Also allow leftTouchZone to trigger joystick if it overlaps or is used for loose detection
+                // For now, let's stick to the joystick container for strict control, 
+                // OR we can make the leftTouchZone redirect to joystick logic if it's near the bottom-left.
+                // User asked for "left bottom corner (50% width 50% height)".
+                // Let's use the leftTouchZone to capture touches in that quadrant.
+
+                if (leftTouchZone) {
+                    leftTouchZone.addEventListener('touchstart', (e) => {
+                        // Check if touch is in bottom-left quadrant
+                        const touch = e.changedTouches[0];
+                        const isBottomLeft = touch.clientX < window.innerWidth / 2 && touch.clientY > window.innerHeight / 2;
+
+                        if (isBottomLeft && !this.joystick.active) {
+                            e.preventDefault();
+                            this.joystick.active = true;
+                            this.joystick.touchId = touch.identifier;
+                            this.joystick.startTime = Date.now();
+                            this.joystick.isTap = true;
+                            this.joystick.locked = false;
+
+                            // Set origin to center of FIXED joystick (not touch point)
+                            const rect = joystickContainer.getBoundingClientRect();
+                            this.joystick.originX = rect.left + rect.width / 2;
+                            this.joystick.originY = rect.top + rect.height / 2;
+
+                            joystickContainer.style.opacity = '1.0';
+
+                            // Start delay timer (250ms)
+                            if (this.joystick.timeoutId) clearTimeout(this.joystick.timeoutId);
+                            this.joystick.timeoutId = window.setTimeout(() => {
+                                this.joystick.locked = true;
+                                this.joystick.isTap = false;
+                                this.updateJoystick(touch.clientX, touch.clientY);
+                            }, 69);
+                        }
+                    }, { passive: false });
+                }
             }
-        });
 
-        // Joystick Logic
-        const joystickContainer = document.getElementById('joystickContainer');
-        const joystickKnob = document.getElementById('joystickKnob');
-
-        if (joystickContainer && joystickKnob) {
-            joystickContainer.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.joystick.active = true;
-                const touch = e.touches[0];
-                const rect = joystickContainer.getBoundingClientRect();
-                this.joystick.originX = rect.left + rect.width / 2;
-                this.joystick.originY = rect.top + rect.height / 2;
-                this.updateJoystick(touch.clientX, touch.clientY);
-            }, { passive: false });
-
-            joystickContainer.addEventListener('touchmove', (e) => {
-                e.preventDefault();
+            // Global Touch Move (for Joystick)
+            window.addEventListener('touchmove', (e) => {
                 if (this.joystick.active) {
-                    const touch = e.touches[0];
-                    this.updateJoystick(touch.clientX, touch.clientY);
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const touch = e.changedTouches[i];
+                        if (touch.identifier === this.joystick.touchId) {
+                            e.preventDefault();
+
+                            // Only move if locked (timer finished)
+                            if (this.joystick.locked) {
+                                this.updateJoystick(touch.clientX, touch.clientY);
+                            } else {
+                                // Optional: If moved significantly, maybe force lock?
+                                // User said "if not locked move the joystick" in context of timeout finishing.
+                                // But usually if you drag far, you want to move.
+                                // Let's stick to strict timer as requested to avoid accidental drags during taps.
+                            }
+                            break;
+                        }
+                    }
                 }
             }, { passive: false });
 
-            joystickContainer.addEventListener('touchend', (e) => {
+            // Global Touch End (for Joystick)
+            window.addEventListener('touchend', (e) => {
+                if (this.joystick.active) {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const touch = e.changedTouches[i];
+                        if (touch.identifier === this.joystick.touchId) {
+                            // Clear timeout if it hasn't fired
+                            if (this.joystick.timeoutId) {
+                                clearTimeout(this.joystick.timeoutId);
+                                this.joystick.timeoutId = null;
+                            }
+
+                            // Tap to Shoot Logic (If not locked)
+                            if (!this.joystick.locked) {
+                                // Fire shot!
+                                const newProjectiles = this.player.shoot({ x: touch.clientX, y: touch.clientY }); // Shoot towards touch (or forward?)
+                                // Actually, shooting towards the touch on the joystick might be weird if it's just a tap.
+                                // Maybe shoot forward or towards the center of screen? 
+                                // User said "click on that area... then fire". 
+                                // Let's shoot towards the touch point relative to player, which is standard.
+                                this.projectiles.push(...newProjectiles);
+                            }
+
+                            // Reset Joystick
+                            this.joystick.active = false;
+                            this.joystick.touchId = null;
+                            this.joystick.x = 0;
+                            this.joystick.y = 0;
+
+                            if (joystickContainer) {
+                                joystickContainer.style.opacity = '0.5'; // Dim opacity
+                            }
+                            if (joystickKnob) {
+                                joystickKnob.style.transform = ``;
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+
+            // Shooting (Right side or non-joystick touches)
+            window.addEventListener('touchstart', (e) => {
+                if (!this.gameRunning || this.isPaused) return;
+
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+
+                    // Ignore if this is the joystick touch
+                    if (touch.identifier === this.joystick.touchId) continue;
+
+                    // Ignore if touching UI elements
+                    const target = e.target as HTMLElement;
+                    if (target.closest('#mobileControls') || target.closest('#pauseModalEl') || target.closest('#modalEl')) continue;
+
+                    // Ignore if touching joystick container directly (handled above)
+                    if (target.closest('#joystickContainer')) continue;
+
+                    // Ignore if touching bottom-left zone (handled as joystick)
+                    const isBottomLeft = touch.clientX < window.innerWidth / 2 && touch.clientY > window.innerHeight / 2;
+                    if (isBottomLeft) continue;
+
+                    const newProjectiles = this.player.shoot({ x: touch.clientX, y: touch.clientY });
+                    this.projectiles.push(...newProjectiles);
+                }
+            });
+        }
+
+        const resumeBtn = document.getElementById('resumeBtn');
+        if (resumeBtn) {
+            resumeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.togglePause();
+            });
+            resumeBtn.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                // Prevent default to avoid double-firing if click also fires
                 e.preventDefault();
-                this.joystick.active = false;
-                this.joystick.x = 0;
-                this.joystick.y = 0;
-                joystickKnob.style.transform = `translate(-50%, -50%)`;
+                this.togglePause();
             });
         }
 
@@ -139,6 +295,24 @@ export class Game {
         if (restartBtn) {
             restartBtn.addEventListener('click', () => {
                 this.start();
+            });
+        }
+
+        // Mobile Controls
+        const pauseBtn = document.getElementById('pauseBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent shooting
+                this.togglePause();
+            });
+        }
+
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent shooting
+                this.toggleFullscreen();
             });
         }
     }
@@ -173,6 +347,32 @@ export class Game {
         } else {
             this.spawnEnemies();
             if (pauseModalEl) pauseModalEl.style.display = 'none';
+        }
+    }
+
+    async toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            try {
+                await document.documentElement.requestFullscreen();
+                // Lock orientation to landscape after entering fullscreen
+                if (screen.orientation && 'lock' in screen.orientation) {
+                    try {
+                        await (screen.orientation as any).lock('landscape');
+                    } catch (err) {
+                        console.log('Orientation lock not supported or failed:', err);
+                    }
+                }
+            } catch (err) {
+                console.error(`Error attempting to enable fullscreen: ${err}`);
+            }
+        } else {
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+                // Unlock orientation when exiting fullscreen
+                if (screen.orientation && 'unlock' in screen.orientation) {
+                    (screen.orientation as any).unlock();
+                }
+            }
         }
     }
 
@@ -243,14 +443,15 @@ export class Game {
     }
 
     updateDifficulty() {
-        // Increase difficulty every 1000 points
-        const newDifficultyLevel = Math.floor(this.score / 1000) + 1;
+        // Increase difficulty every 2500 points (was 1000)
+        const newDifficultyLevel = Math.floor(this.score / 2500) + 1;
 
         if (newDifficultyLevel !== this.difficultyLevel) {
             this.difficultyLevel = newDifficultyLevel;
 
-            // Increase max enemies as difficulty increases (cap at 15)
-            this.maxEnemies = Math.min(15, 5 + (this.difficultyLevel - 1) * 2);
+            // Increase max enemies slower (cap at 12 instead of 15)
+            // Increases by 1 per level instead of 2
+            this.maxEnemies = Math.min(12, 5 + (this.difficultyLevel - 1));
 
             // Restart spawning with new difficulty settings
             this.spawnEnemies();
@@ -258,7 +459,14 @@ export class Game {
     }
 
     spawnPowerUp(x: number, y: number) {
-        if (Math.random() < 0.1) { // 10% chance
+        const rand = Math.random();
+
+        // 5% chance for HealthBoost (more accessible)
+        if (rand < 0.05) {
+            this.powerUps.push(new PowerUp(x, y, 'HealthBoost'));
+        }
+        // 10% chance for other power-ups
+        else if (rand < 0.15) {
             const types: PowerUpType[] = ['Shield', 'DoubleShot', 'SpeedBoost'];
             const type = types[Math.floor(Math.random() * types.length)];
             this.powerUps.push(new PowerUp(x, y, type));
@@ -273,6 +481,15 @@ export class Game {
             this.player.doubleShotTimer = duration;
         } else if (type === 'SpeedBoost') {
             this.player.speedBoostTimer = duration;
+        } else if (type === 'HealthBoost') {
+            // Restore 20 HP
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 20);
+            // Update HP bar display
+            const hpBarEl = document.getElementById('hpBarEl');
+            if (hpBarEl) {
+                const hpPercent = (this.player.hp / this.player.maxHp) * 100;
+                hpBarEl.style.width = `${hpPercent}%`;
+            }
         }
     }
 
@@ -285,9 +502,9 @@ export class Game {
         const doubleBar = document.getElementById('doubleBar');
         const speedBar = document.getElementById('speedBar');
 
-        if (shieldContainer) shieldContainer.style.display = this.player.shieldTimer > 0 ? 'flex' : 'none';
-        if (doubleContainer) doubleContainer.style.display = this.player.doubleShotTimer > 0 ? 'flex' : 'none';
-        if (speedContainer) speedContainer.style.display = this.player.speedBoostTimer > 0 ? 'flex' : 'none';
+        if (shieldContainer) shieldContainer.style.display = this.player.shieldTimer > 0 ? 'block' : 'none';
+        if (doubleContainer) doubleContainer.style.display = this.player.doubleShotTimer > 0 ? 'block' : 'none';
+        if (speedContainer) speedContainer.style.display = this.player.speedBoostTimer > 0 ? 'block' : 'none';
 
         const maxDuration = 300; // 5 seconds * 60 fps
 
