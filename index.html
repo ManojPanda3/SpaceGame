@@ -30,13 +30,72 @@
     </div>
     <div class="text-sm flex items-center"
       style="font-family: 'Press Start 2P', cursive; font-size: 12px; color: #fbbf24;">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-400" viewBox="0 0 20 20"
-        fill="currentColor">
-        <path fill-rule="evenodd"
-          d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z"
-          clip-rule="evenodd" />
+      <!-- Enhanced Coin Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor">
+        <circle cx="12" cy="12" r="9" stroke="#fbbf24" stroke-width="2" fill="#f59e0b" fill-opacity="0.2" />
+        <path d="M12 6V18" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" />
+        <path d="M12 6C14 6 15 8 15 12C15 16 14 18 12 18" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" />
+        <path d="M12 6C10 6 9 8 9 12C9 16 10 18 12 18" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" />
       </svg>
       <span>COINS: </span><span id="scoreEl">0</span>
+    </div>
+  </div>
+
+  <!-- Power-up Timers (Progress Bars) -->
+  <div class="fixed top-20 left-4 flex flex-col gap-3 select-none z-10 w-32">
+    <div id="shieldContainer" class="hidden flex-col gap-1">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">
+          S</div>
+        <span class="text-cyan-400 text-[10px] font-bold">SHIELD</span>
+      </div>
+      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
+        <div id="shieldBar" class="h-full bg-cyan-400 transition-all duration-100 ease-linear" style="width: 100%">
+        </div>
+      </div>
+    </div>
+    <div id="doubleContainer" class="hidden flex-col gap-1">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">
+          D</div>
+        <span class="text-rose-400 text-[10px] font-bold">DOUBLE</span>
+      </div>
+      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
+        <div id="doubleBar" class="h-full bg-rose-400 transition-all duration-100 ease-linear" style="width: 100%">
+        </div>
+      </div>
+    </div>
+    <div id="speedContainer" class="hidden flex-col gap-1">
+      <div class="flex items-center gap-2">
+        <div
+          class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">B
+        </div>
+        <span class="text-yellow-400 text-[10px] font-bold">SPEED</span>
+      </div>
+      <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden border border-gray-600">
+        <div id="speedBar" class="h-full bg-yellow-400 transition-all duration-100 ease-linear" style="width: 100%">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Modal -->
+  <div id="pauseModalEl" class="fixed inset-0 flex items-center justify-center hidden bg-black bg-opacity-50 z-50">
+    <div class="bg-white p-8 rounded-lg text-center">
+      <h2 class="text-3xl font-bold mb-4 text-gray-900">PAUSED</h2>
+      <p class="text-gray-600 mb-4">Press ESC to Resume</p>
+      <button id="restartBtn"
+        class="bg-red-500 text-white px-6 py-2 rounded-full font-bold hover:bg-red-600 transition duration-200">Restart
+        Game</button>
+    </div>
+  </div>
+
+  <!-- Joystick UI (Hidden by default) -->
+  <div id="joystickContainer"
+    class="fixed bottom-8 left-8 w-32 h-32 bg-gray-800 bg-opacity-50 rounded-full hidden touch-none z-20">
+    <div id="joystickKnob"
+      class="absolute w-12 h-12 bg-white bg-opacity-80 rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-lg">
     </div>
   </div>
 

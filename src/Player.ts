@@ -2,9 +2,9 @@ import { Entity } from './Entity';
 import { Projectile } from './Projectile';
 
 export class Player extends Entity {
-    shieldActive: boolean = false;
-    doubleShotActive: boolean = false;
-    speedBoostActive: boolean = false;
+    shieldTimer: number = 0;
+    doubleShotTimer: number = 0;
+    speedBoostTimer: number = 0;
     hp: number = 100;
     maxHp: number = 100;
     isInvulnerable: boolean = false;
@@ -16,6 +16,11 @@ export class Player extends Entity {
     }
 
     update(canvas: HTMLCanvasElement): void {
+        // Power-up Timers
+        if (this.shieldTimer > 0) this.shieldTimer--;
+        if (this.doubleShotTimer > 0) this.doubleShotTimer--;
+        if (this.speedBoostTimer > 0) this.speedBoostTimer--;
+
         // Invulnerability Timer
         if (this.isInvulnerable) {
             this.invulnerabilityTimer--;
@@ -62,7 +67,7 @@ export class Player extends Entity {
 
         super.draw(ctx);
 
-        if (this.shieldActive) {
+        if (this.shieldTimer > 0) {
             ctx.beginPath();
             ctx.arc(this.position.x, this.position.y, this.radius + 5, 0, Math.PI * 2, false);
             ctx.strokeStyle = 'cyan';
@@ -92,7 +97,7 @@ export class Player extends Entity {
             velocity
         ));
 
-        if (this.doubleShotActive) {
+        if (this.doubleShotTimer > 0) {
             // Second bullet slightly offset or angled? 
             // Let's do parallel bullets
             const offset = 10;

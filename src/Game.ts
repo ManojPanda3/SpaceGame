@@ -24,12 +24,21 @@ export class Game {
     isGameOver: boolean = false;
 
     isPaused: boolean = false;
+    isMobile: boolean = false;
+    joystick: { active: boolean, x: number, y: number, originX: number, originY: number } = { active: false, x: 0, y: 0, originX: 0, originY: 0 };
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.canvas.width = innerWidth;
         this.canvas.height = innerHeight;
+
+        // Mobile Detection
+        this.isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        if (this.isMobile) {
+            const joystickContainer = document.getElementById('joystickContainer');
+            if (joystickContainer) joystickContainer.style.display = 'block';
+        }
 
         this.player = new Player(
             this.canvas.width / 2,
@@ -61,12 +70,90 @@ export class Game {
             this.keys[e.code] = false;
         });
 
+        // Mouse Shoot
         window.addEventListener('click', (e) => {
-            if (this.gameRunning && !this.isPaused) {
+            if (this.gameRunning && !this.isPaused && !this.isMobile) {
                 const newProjectiles = this.player.shoot({ x: e.clientX, y: e.clientY });
                 this.projectiles.push(...newProjectiles);
             }
         });
+
+        // Touch Shoot (Anywhere on screen except joystick)
+        window.addEventListener('touchstart', (e) => {
+            if (this.gameRunning && !this.isPaused && this.isMobile) {
+                const touch = e.touches[0];
+                const joystickContainer = document.getElementById('joystickContainer');
+                const rect = joystickContainer?.getBoundingClientRect();
+
+                // Don't shoot if touching joystick area
+                if (rect && (
+                    touch.clientX >= rect.left &&
+                    touch.clientX <= rect.right &&
+                    touch.clientY >= rect.top &&
+                    touch.clientY <= rect.bottom
+                )) return;
+
+                const newProjectiles = this.player.shoot({ x: touch.clientX, y: touch.clientY });
+                this.projectiles.push(...newProjectiles);
+            }
+        });
+
+        // Joystick Logic
+        const joystickContainer = document.getElementById('joystickContainer');
+        const joystickKnob = document.getElementById('joystickKnob');
+
+        if (joystickContainer && joystickKnob) {
+            joystickContainer.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.joystick.active = true;
+                const touch = e.touches[0];
+                const rect = joystickContainer.getBoundingClientRect();
+                this.joystick.originX = rect.left + rect.width / 2;
+                this.joystick.originY = rect.top + rect.height / 2;
+                this.updateJoystick(touch.clientX, touch.clientY);
+            }, { passive: false });
+
+            joystickContainer.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (this.joystick.active) {
+                    const touch = e.touches[0];
+                    this.updateJoystick(touch.clientX, touch.clientY);
+                }
+            }, { passive: false });
+
+            joystickContainer.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.joystick.active = false;
+                this.joystick.x = 0;
+                this.joystick.y = 0;
+                joystickKnob.style.transform = `translate(-50%, -50%)`;
+            });
+        }
+
+        const restartBtn = document.getElementById('restartBtn');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', () => {
+                this.start();
+            });
+        }
+    }
+
+    updateJoystick(clientX: number, clientY: number) {
+        const joystickKnob = document.getElementById('joystickKnob');
+        if (!joystickKnob) return;
+
+        const dx = clientX - this.joystick.originX;
+        const dy = clientY - this.joystick.originY;
+        const distance = Math.min(Math.hypot(dx, dy), 40); // Max radius 40
+        const angle = Math.atan2(dy, dx);
+
+        this.joystick.x = Math.cos(angle) * (distance / 40);
+        this.joystick.y = Math.sin(angle) * (distance / 40);
+
+        const knobX = Math.cos(angle) * distance;
+        const knobY = Math.sin(angle) * distance;
+
+        joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
     }
 
     togglePause() {
@@ -128,10 +215,17 @@ export class Game {
         const speed = this.player.speedBoostTimer > 0 ? 8 : 5;
         this.player.velocity = { x: 0, y: 0 };
 
+        // Keyboard Input
         if (this.keys['KeyW'] || this.keys['ArrowUp']) this.player.velocity.y -= speed;
         if (this.keys['KeyS'] || this.keys['ArrowDown']) this.player.velocity.y += speed;
         if (this.keys['KeyA'] || this.keys['ArrowLeft']) this.player.velocity.x -= speed;
         if (this.keys['KeyD'] || this.keys['ArrowRight']) this.player.velocity.x += speed;
+
+        // Joystick Input
+        if (this.joystick.active || (this.joystick.x !== 0 || this.joystick.y !== 0)) {
+            this.player.velocity.x += this.joystick.x * speed;
+            this.player.velocity.y += this.joystick.y * speed;
+        }
     }
 
     spawnPowerUp(x: number, y: number) {
@@ -154,13 +248,23 @@ export class Game {
     }
 
     updatePowerUpUI() {
-        const shieldIcon = document.getElementById('shieldIcon');
-        const doubleShotIcon = document.getElementById('doubleShotIcon');
-        const speedBoostIcon = document.getElementById('speedBoostIcon');
+        const shieldContainer = document.getElementById('shieldContainer');
+        const doubleContainer = document.getElementById('doubleContainer');
+        const speedContainer = document.getElementById('speedContainer');
 
-        if (shieldIcon) shieldIcon.style.display = this.player.shieldTimer > 0 ? 'block' : 'none';
-        if (doubleShotIcon) doubleShotIcon.style.display = this.player.doubleShotTimer > 0 ? 'block' : 'none';
-        if (speedBoostIcon) speedBoostIcon.style.display = this.player.speedBoostTimer > 0 ? 'block' : 'none';
+        const shieldBar = document.getElementById('shieldBar');
+        const doubleBar = document.getElementById('doubleBar');
+        const speedBar = document.getElementById('speedBar');
+
+        if (shieldContainer) shieldContainer.style.display = this.player.shieldTimer > 0 ? 'flex' : 'none';
+        if (doubleContainer) doubleContainer.style.display = this.player.doubleShotTimer > 0 ? 'flex' : 'none';
+        if (speedContainer) speedContainer.style.display = this.player.speedBoostTimer > 0 ? 'flex' : 'none';
+
+        const maxDuration = 300; // 5 seconds * 60 fps
+
+        if (shieldBar) shieldBar.style.width = `${(this.player.shieldTimer / maxDuration) * 100}%`;
+        if (doubleBar) doubleBar.style.width = `${(this.player.doubleShotTimer / maxDuration) * 100}%`;
+        if (speedBar) speedBar.style.width = `${(this.player.speedBoostTimer / maxDuration) * 100}%`;
     }
 
     animate = () => {
